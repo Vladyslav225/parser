@@ -41,14 +41,18 @@ def type_product(file):
 
 def data_products():
     for key, link in all_type_product.items():
-        if key == 'Смартфоны':
-            get_data_smartfony = collect_data_products.data_smartfony(link)
+        try:
+            if key == 'Смартфоны':
+                collect_data_products.page_smartfony(key, link)
 
-        # if key == 'Телевизоры, фото, видео':
-        #     get_data_tv_photo_video = collect_data_products.data_tv_photo_video(link)
+            # if key == 'Телевизоры, фото, видео':
+            #     get_data_tv_photo_video = collect_data_products.data_tv_photo_video(link)
 
-        # if key == 'Аудио':
-        #     get_data_tv_photo_video = collect_data_products.data_audio(link)
+            # if key == 'Аудио':
+            #     get_data_tv_photo_video = collect_data_products.data_audio(link)
+
+        except Exception as ex:
+            print(ex)
 
         
 
