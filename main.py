@@ -1,5 +1,6 @@
 import bs4
 import requests
+import json
 
 import config
 
@@ -7,6 +8,9 @@ import config
 links_type_products = []
 links_subtype_products = []
 product_links_for_get_reviews = []
+
+link_type_otzyvy = {}
+links_type_anchor = {}
 
 
 def index_page():
@@ -85,7 +89,9 @@ def open_links_type_products():
 
 
 def blocks_with_products():
-    all_product_links = []
+    links_phone = []
+    links_tv = []
+    links_noutbuki = []
 
     for links in links_subtype_products:
         try:
@@ -101,27 +107,75 @@ def blocks_with_products():
         for product_links in product_blocks:
             url_products = product_links.find('div', {'class': 'card js-card sc-product'}).find('div', {'class':'card__body'}).find('a', {'class':'card__title'}).get('href')
 
-            if 'https://www.foxtrot.com.ua' not in url_products:
-                _create_full_link = 'https://www.foxtrot.com.ua' + url_products
-                all_product_links.append(_create_full_link)
+            if 'mobilnye_telefony' in url_products and len(links_phone) != 3:
+                links_phone.append('https://www.foxtrot.com.ua' + url_products)
 
-            for _new_list in all_product_links:
-                product_links_for_get_reviews.append(_new_list)
+            if 'led_televizory' in url_products and len(links_tv) != 3:
+                links_tv.append('https://www.foxtrot.com.ua' + url_products)
 
-                print(product_links_for_get_reviews)
+            if 'noutbuki' in url_products and len(links_noutbuki) != 3:
+                links_noutbuki.append('https://www.foxtrot.com.ua' + url_products)
+
+    links_for_parsing  = [*links_phone, *links_tv, *links_noutbuki]
+
+    return links_for_parsing
 
 
-# def get_link_products():
-#     with open(config.ALL_PRODUCTS_HTML, 'r') as file:
-#         file = file.read()
+def get_links_reviews(links):
+    for links_for_scraping in links:
+
+        try:
+            response = requests.get(url=links_for_scraping, headers=config.HEADERS)
+            
+            soup = bs4.BeautifulSoup(response.text, 'html.parser')
+
+        except Exception as ex:
+            print(ex)
+
+        title_product = soup.find('h1', {'class':'page__title overflow'}).text.strip()
+
+        find_element_coment = soup.find('div', {'class':'product-menu__card-review product-menu__card-review_static'}).find('a', {'class':'product-menu__card-comments'}).get('href')
+
+        if 'otzyvy.html' in find_element_coment:
+            links_otzyvy = 'https://www.foxtrot.com.ua' + find_element_coment
+            link_type_otzyvy[title_product] = links_otzyvy
+            
+        elif '#anchor-3' in find_element_coment:
+            links_anchor = links_for_scraping + find_element_coment
+            links_type_anchor[title_product] = links_anchor
+
+
+# def open_links_type_otzyvy():
+#     for title, link in link_type_otzyvy.items():
+#         try:
+#             response = requests.get(url=link, headers=config.HEADERS)
+
+#             soup = bs4.BeautifulSoup(response.text, 'html.parser')
+
+#         except Exception as ex:
+#             print(ex)
+
+
+def open_links_type_anchor():
+    for title, link in links_type_anchor.items():
+        try:
+            response = requests.get(url=link, headers=config.HEADERS)
+
+            soup = bs4.BeautifulSoup(response.text, 'html.parser')
+
+        except Exception as ex:
+            print(ex)
+
+
+        find_block_reviews = soup.find('section', {'class':'main-reviews container'})#.find('div', {'class':'main-reviews__body js-toggle-body'})
+        # print(find_block_reviews)
+
+        element_all_reviews = find_block_reviews.find('div', {'class':'main-reviews__item'}).find('div').find('a').get('href')
         
-#     soup = bs4.BeautifulSoup(file, 'html.parser')
-
-    # print(block)
-
-
+        # res = requests.get(url=element_all_reviews, headers=config.HEADERS)
         
-
+        # jsonn = res.json()
+        # print(jsonn)
 
 
 
@@ -137,9 +191,13 @@ def main():
 
     open_links_type_products()
 
-    blocks_with_products()
+    get_links_products =  blocks_with_products()
 
-    # get_link_products()
+    get_links_reviews(links=get_links_products)
+
+    # open_links_type_otzyvy()
+
+    open_links_type_anchor()
 
 
 if __name__ == '__main__':
