@@ -2,76 +2,145 @@ import bs4
 import requests
 
 import config
-import collect_data_products
 
 
-all_type_product = {}
+links_type_products = []
+links_subtype_products = []
+product_links_for_get_reviews = []
 
 
-def main_page(url):
+def index_page():
     try:
-        response = requests.get(url, headers=config.HEADERS).text
+        response = requests.get(url=config.ONLINE_STORE, headers=config.HEADERS).text
 
     except Exception as ex:
         print(ex)
 
-    with open('index.html', 'w', encoding='utf-8') as file:
+    with open(config.INDEX_PAGE_HTML, 'w', encoding='utf-8') as file:
         file.write(str(response))
         file.close()
 
 
-def type_product(file):
+def catalog_with_product(file):
+    all_links_type_products = {}
+
     try:
         soup = bs4.BeautifulSoup(file, 'html.parser')
 
     except Exception as ex:
         print(ex)
 
-    block_type_elements = soup.find('div', {'class': 'df l0 full-width'}).find('ul', {'class': 'menu-0-2-51'}).find_all('li')
+    catalog = soup.find('div', {'class':'catalog__wrap'}).find('ul').find_all('li')
 
-    for elements in block_type_elements:
-        title = elements.find('a', {'class':'df aic jcsb'}).find('div', {'class':'df aic'}).text
-        link = elements.find('a', {'class':'df aic jcsb'}).get('href')
-        
-        if 'https://www.ctrs.com.ua' not in link:
-            full_link = 'https://www.ctrs.com.ua' + link
-        
-        all_type_product[title] = full_link
-
-
-def data_products():
-    for key, link in all_type_product.items():
+    for type_product in catalog[1:]:
         try:
-            if key == 'Смартфоны':
-                collect_data_products.page_smartfony(key, link)
+            text_type_products = type_product.find('div').find('a').find('p').text
 
-            # if key == 'Телевизоры, фото, видео':
-            #     get_data_tv_photo_video = collect_data_products.data_tv_photo_video(link)
-
-            # if key == 'Аудио':
-            #     get_data_tv_photo_video = collect_data_products.data_audio(link)
+            url_type_products = type_product.find('div').find('a').get('href')
 
         except Exception as ex:
             print(ex)
 
+        if 'https://www.foxtrot.com.ua' not in url_type_products:
+            _create_full_link = 'https://www.foxtrot.com.ua' + url_type_products
+
+        all_links_type_products[text_type_products] = _create_full_link
+
+    for title, link in all_links_type_products.items():
+        if 'Cмартфоны' in title:
+            links_type_products.append(link)
+
+        if 'Телевизоры, аудиотехника' in title:
+            links_type_products.append(link)
+
+
+        if 'Для геймеров' in title:
+            links_type_products.append(link)
+
+
+
+def open_links_type_products():
+    for data in links_type_products:
+        try:
+            response = requests.get(url=data, headers=config.HEADERS)
+
+            soup = bs4.BeautifulSoup(response.text, 'html.parser')
+
+        except Exception as ex:
+            print(ex)
+
+        block_container = soup.find_all('div', {'class':'container'})
+
+        for open_block in block_container:
+            block_catalog = open_block.find('div', {'class':'wrapper'}).find('div', {'class':'category'})
+
+            if block_catalog == None:
+                continue
+
+            open_block_catalog = block_catalog.find('div', {'class':'category__item'}).find('a').get('href')
+
+            if 'https://www.foxtrot.com.ua' not in open_block_catalog:
+                _create_full_link = 'https://www.foxtrot.com.ua' + open_block_catalog
+                links_subtype_products.append(_create_full_link)
+
+
+def blocks_with_products():
+    all_product_links = []
+
+    for links in links_subtype_products:
+        try:
+            response = requests.get(url=links, headers=config.HEADERS)
+
+            soup = bs4.BeautifulSoup(response.text, 'html.parser')
+
+        except Exception as ex:
+            print(ex)
+
+        product_blocks = soup.find('div', {'class':'listing__body-wrap image-switch'}).find('section').find_all('article')
+        
+        for product_links in product_blocks:
+            url_products = product_links.find('div', {'class': 'card js-card sc-product'}).find('div', {'class':'card__body'}).find('a', {'class':'card__title'}).get('href')
+
+            if 'https://www.foxtrot.com.ua' not in url_products:
+                _create_full_link = 'https://www.foxtrot.com.ua' + url_products
+                all_product_links.append(_create_full_link)
+
+            for _new_list in all_product_links:
+                product_links_for_get_reviews.append(_new_list)
+
+                print(product_links_for_get_reviews)
+
+
+# def get_link_products():
+#     with open(config.ALL_PRODUCTS_HTML, 'r') as file:
+#         file = file.read()
+        
+#     soup = bs4.BeautifulSoup(file, 'html.parser')
+
+    # print(block)
+
+
+        
+
+
+
+
         
 
 def main():
-    main_page(config.ONLINE_STORE)
+    index_page()
 
-    with open('index.html', 'r') as file:
+    with open(config.INDEX_PAGE_HTML, 'r') as file:
         file = file.read()
-    type_product(file)
+        
+    catalog_with_product(file)
 
-    data_products()
+    open_links_type_products()
 
+    blocks_with_products()
 
-
+    # get_link_products()
 
 
 if __name__ == '__main__':
     main()
-
-
-# with open(PC_PRODUCTS_JSON, 'w') as file:
-#         json.dump(list_product, file, indent=4, ensure_ascii=False)
