@@ -134,6 +134,8 @@ def get_links_reviews(links):
 
         title_product = soup.find('h1', {'class':'page__title overflow'}).text.strip()
 
+        correction_title = ' '.join(title_product.split(' ')[:6]).replace('/', ' ')
+
         find_element_coment = soup.find('div', {'class':'product-menu__card-review product-menu__card-review_static'}).find('a', {'class':'product-menu__card-comments'}).get('href')
 
         if 'otzyvy.html' in find_element_coment:
@@ -142,9 +144,10 @@ def get_links_reviews(links):
             
         elif '#anchor-3' in find_element_coment:
             links_anchor = links_for_scraping + find_element_coment
-            links_type_anchor[title_product] = links_anchor
+            links_type_anchor[correction_title] = links_anchor
 
 
+# Collect feedback from links with the type otzyvy
 # def open_links_type_otzyvy():
 #     for title, link in link_type_otzyvy.items():
 #         try:
@@ -156,29 +159,60 @@ def get_links_reviews(links):
 #             print(ex)
 
 
+# Collect feedback from links with the type anchor
 def open_links_type_anchor():
     for title, link in links_type_anchor.items():
         try:
-            response = requests.get(url=link, headers=config.HEADERS)
+            response = requests.get(url=link, headers=config.HEADERS).text
 
-            soup = bs4.BeautifulSoup(response.text, 'html.parser')
+            with open(f'/home/vladyslav/parser_eldorado/parser/html_files/{title}.html', 'w', encoding='utf-8') as file:
+                file.write(str(response))
+                file.close()
+
+            with open(f'/home/vladyslav/parser_eldorado/parser/html_files/{title}.html', 'r') as file:
+                file = file.read()
+
+            soup = bs4.BeautifulSoup(file, 'html.parser')
 
         except Exception as ex:
             print(ex)
 
+        find_block_reviews = soup.find('section', {'class':'main-reviews container'})
 
-        find_block_reviews = soup.find('section', {'class':'main-reviews container'})#.find('div', {'class':'main-reviews__body js-toggle-body'})
-        # print(find_block_reviews)
-
-        element_all_reviews = find_block_reviews.find('div', {'class':'main-reviews__item'}).find('div').find('a').get('href')
+        element_all_reviews = find_block_reviews.find_all('div', {'class':'main-reviews__body js-toggle-body'})
         
-        # res = requests.get(url=element_all_reviews, headers=config.HEADERS)
-        
-        # jsonn = res.json()
-        # print(jsonn)
+        # Getting the name reviewer
+        for basic_block_with_review in element_all_reviews:
+            get_basic_block_with_review = basic_block_with_review.find_all('div', {'class':'main-reviews_comments-block-scroll smooth-scroll'})
 
+            for subblock_with_review in get_basic_block_with_review:
+                get_subblock_with_review = subblock_with_review.find_all('div', {'class':'product-comment__item'})
 
+                for element_with_name in get_subblock_with_review:
+                    get_text_name = element_with_name.find('div', {'class':'product-comment__item-title'}).text.strip()
+                    print(get_text_name)
 
+            # Getting the date the review was posted
+                for element_with_data in get_subblock_with_review:
+                    get_element_with_data = element_with_data.find_all('div', {'class':'product-comment__item-col'})
+
+                    for element_with_text_date in get_element_with_data:
+                        get_element_text_date = element_with_text_date.find('div', {'class':'product-comment__item-date'})
+
+                        if get_element_text_date == None:
+                            continue
+
+                        correction_text_data = get_element_text_date.text
+
+            # Getting the review
+                for element_with_review in get_subblock_with_review:
+                    get_element_with_review = element_with_review.find_all('div', {'class':'product-comment__item-col product-comment__item-col_content'})
+
+                    for text_review in get_element_with_review:
+                        get_text_review = text_review.find('div', {'class':'product-comment__item-text'}).text.strip()
+
+            # Getting advantages and disadvantages
+                
         
 
 def main():
