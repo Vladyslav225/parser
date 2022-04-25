@@ -190,7 +190,6 @@ def open_links_type_anchor():
 
                 for element_with_name in get_subblock_with_review:
                     get_text_name = element_with_name.find('div', {'class':'product-comment__item-title'}).text.strip()
-                    print(get_text_name)
 
             # Getting the date the review was posted
                 for element_with_data in get_subblock_with_review:
@@ -212,8 +211,16 @@ def open_links_type_anchor():
                         get_text_review = text_review.find('div', {'class':'product-comment__item-text'}).text.strip()
 
             # Getting advantages and disadvantages
-                
-        
+                for basic_block_pluses_moins in get_subblock_with_review:
+                    get_basic_block_pluses_moins = basic_block_pluses_moins.find_all('div', {'class':'product-comment__item-col'})
+
+                    for block_pluses_moins in get_basic_block_pluses_moins:
+                        get_block_pluses_moins = block_pluses_moins.find('ul', {'class':'product-comment__item-info'})
+                        
+                        if get_block_pluses_moins == None:
+                            continue
+                        
+
 
 def main():
     index_page()
