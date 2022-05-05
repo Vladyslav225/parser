@@ -147,20 +147,14 @@ def get_links_reviews(links):
             links_type_anchor[correction_title] = links_anchor
 
 
-# Collect feedback from links with the type otzyvy
-# def open_links_type_otzyvy():
-#     for title, link in link_type_otzyvy.items():
-#         try:
-#             response = requests.get(url=link, headers=config.HEADERS)
-
-#             soup = bs4.BeautifulSoup(response.text, 'html.parser')
-
-#         except Exception as ex:
-#             print(ex)
+#TODO Collect feedback from links with the type otzyvy
 
 
 # Collect feedback from links with the type anchor
 def open_links_type_anchor():
+    reviews = {}
+    pluses_and_moins = {}
+
     for title, link in links_type_anchor.items():
         try:
             response = requests.get(url=link, headers=config.HEADERS).text
@@ -190,7 +184,7 @@ def open_links_type_anchor():
 
                 for element_with_name in get_subblock_with_review:
                     get_text_name = element_with_name.find('div', {'class':'product-comment__item-title'}).text.strip()
-
+                    
             # Getting the date the review was posted
                 for element_with_data in get_subblock_with_review:
                     get_element_with_data = element_with_data.find_all('div', {'class':'product-comment__item-col'})
@@ -202,7 +196,7 @@ def open_links_type_anchor():
                             continue
 
                         correction_text_data = get_element_text_date.text
-
+                        
             # Getting the review
                 for element_with_review in get_subblock_with_review:
                     get_element_with_review = element_with_review.find_all('div', {'class':'product-comment__item-col product-comment__item-col_content'})
@@ -210,7 +204,7 @@ def open_links_type_anchor():
                     for text_review in get_element_with_review:
                         get_text_review = text_review.find('div', {'class':'product-comment__item-text'}).text.strip()
 
-            # Getting advantages and disadvantages
+            # Getting pluses and moins products
                 for basic_block_pluses_moins in get_subblock_with_review:
                     get_basic_block_pluses_moins = basic_block_pluses_moins.find_all('div', {'class':'product-comment__item-col'})
 
@@ -219,7 +213,13 @@ def open_links_type_anchor():
                         
                         if get_block_pluses_moins == None:
                             continue
+
+                        get_subblock_pluses_moins = get_block_pluses_moins.find_all('li')
                         
+                        for block_pluses in get_subblock_pluses_moins:
+                            lable_pluses = block_pluses.find('label').text
+
+                            text_pluses = block_pluses.find('p').text                        
 
 
 def main():
