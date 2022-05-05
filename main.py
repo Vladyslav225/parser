@@ -219,7 +219,7 @@ def open_links_type_anchor():
                         for block_pluses in get_subblock_pluses_moins:
                             lable_pluses = block_pluses.find('label').text
 
-                            text_pluses = block_pluses.find('p').text                        
+                            text_pluses = block_pluses.find('p').text
 
 
 def main():
