@@ -84,8 +84,14 @@ def category_page_request():
 
             
 
-# Get products
-def products(title):
+# Getting product links to collect feedback
+def collect_links_feedback(title):
+    links_for_collect_feedback = []
+
+    mobile_phone_links = []
+    televizory_links = []
+    noutbuki_links = []
+
     for item in title:
         with open(f'{config.HTML_FILES}{item}.html', 'r') as file:
             file = file.read()
@@ -94,22 +100,49 @@ def products(title):
 
         conteiner_block = soup.find_all('div', {'class':'container'})
 
-        for some in conteiner_block:
-            get_ = some.find('div', {'class':'listing__body'}).find('div').find('div', {'class':'listing__body-wrap image-switch'})
-            print(get_)
+        for general_blocks in conteiner_block:
+            getting_general_blocks = general_blocks.find('div', {'class':'listing__body'})
 
-        
+            if getting_general_blocks == None:
+                continue
 
+            getting_sub_block = getting_general_blocks.find('div', {'class':'listing__body-wrap image-switch'})
 
-#TODO Collect feedback from links with the type otzyvy
-#TODO Collect feedback from links with the type anchor
+            if getting_sub_block == None:
+                continue
+
+            getting_block_article = getting_sub_block.find('section').find_all('article')
+
+            if getting_block_article == None:
+                continue
+
+            for blocks_products in getting_block_article:
+                check_comments = blocks_products.find('div', {'class':'card js-card sc-product'}).find('div', {'class':'card__body'}).find('div', {'class':'card__col-info'}).find('a', {'class':'card__comments'}).find('p')
+
+                if check_comments == None:
+                    continue
+
+                get_url_product = config.URL_BASIC_PAGE + blocks_products.find('div', {'class':'card js-card sc-product'}).find('div', {'class':'card__body'}).find('div', {'class':'card__col-info'}).find('a', {'class':'card__comments'}).get('href')
+
+                if 'mobilnye_telefony' in get_url_product and len(mobile_phone_links) != 3:
+                    mobile_phone_links.append(get_url_product)
+
+                if 'led_televizory' in get_url_product and len(televizory_links) != 3:
+                    televizory_links.append(get_url_product)
+
+                if 'noutbuki' in get_url_product and len(noutbuki_links) != 3:
+                    noutbuki_links.append(get_url_product)
+
+    links_for_collect_feedback = [*mobile_phone_links, *televizory_links, *noutbuki_links]
+
+    return links_for_collect_feedback
 
 
 def main():
     # request_basic_page()
     # categories()
     title = category_page_request()
-    products(title=title)
+    links_for_scraping = collect_links_feedback(title=title)
 
 if __name__ == '__main__':
     main()
