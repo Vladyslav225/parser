@@ -81,11 +81,8 @@ def category_page_request():
     return title_sub_categies
 
 
-
-            
-
 # Getting product links to collect feedback
-def collect_links_feedback(title):
+def collect_links_reviewes(title):
     links_for_collect_feedback = []
 
     mobile_phone_links = []
@@ -138,11 +135,36 @@ def collect_links_feedback(title):
     return links_for_collect_feedback
 
 
+# Collecting data (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
+def collecting_data_from_reviews(feedback_links):
+    for links in feedback_links:
+        try:
+            response = requests.get(url=links, headers=config.HEADERS)
+
+            soup = bs4.BeautifulSoup(response.text, 'html.parser')
+
+        except Exception as ex:
+            print(ex)
+
+        get_title_product = soup.find('section', {'class':'main-reviews container'}).find('h2', {'class':'page__title nowrap js-toggle-card-box'}).find('label').text
+        print(get_title_product)
+
+        #TODO Create new title product
+
+        get_block_comment = soup.find('section', {'class':'main-reviews container'}).find('div', {'class':'main-reviews__body js-toggle-body'}).find('div').find_all('div', {'class':'product-comment__item-title'})
+
+        for text in get_block_comment:
+            print(text.text)
+        
+        
+
 def main():
     # request_basic_page()
     # categories()
     title = category_page_request()
-    links_for_scraping = collect_links_feedback(title=title)
+    links_for_scraping = collect_links_reviewes(title=title)
+    collecting_data_from_reviews(feedback_links=links_for_scraping)
+
 
 if __name__ == '__main__':
     main()
