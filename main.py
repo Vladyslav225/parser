@@ -83,11 +83,11 @@ def category_page_request():
 
 # Getting product links to collect feedback
 def collect_links_reviewes(title):
-    links_for_collect_feedback = []
+    links_for_collect_reviewes = []
 
-    mobile_phone_links = []
-    televizory_links = []
-    noutbuki_links = []
+    mobile_phone_links = {}
+    televizory_links = {}
+    noutbuki_links = {}
 
     for item in title:
         with open(f'{config.HTML_FILES}{item}.html', 'r') as file:
@@ -114,47 +114,63 @@ def collect_links_reviewes(title):
                 continue
 
             for blocks_products in getting_block_article:
+                
                 check_comments = blocks_products.find('div', {'class':'card js-card sc-product'}).find('div', {'class':'card__body'}).find('div', {'class':'card__col-info'}).find('a', {'class':'card__comments'}).find('p')
 
                 if check_comments == None:
                     continue
 
+                title_product = blocks_products.find('div', {'class':'card js-card sc-product'}).find('div', {'class':'card__body'}).find('a').text
+
+                title_clipping = ' '.join(title_product.split(' ')[:6]).replace('/', '-')
+
                 get_url_product = config.URL_BASIC_PAGE + blocks_products.find('div', {'class':'card js-card sc-product'}).find('div', {'class':'card__body'}).find('div', {'class':'card__col-info'}).find('a', {'class':'card__comments'}).get('href')
 
                 if 'mobilnye_telefony' in get_url_product and len(mobile_phone_links) != 3:
-                    mobile_phone_links.append(get_url_product)
+                    mobile_phone_links[title_clipping] = get_url_product
 
                 if 'led_televizory' in get_url_product and len(televizory_links) != 3:
-                    televizory_links.append(get_url_product)
+                    televizory_links[title_clipping] = get_url_product
 
                 if 'noutbuki' in get_url_product and len(noutbuki_links) != 3:
-                    noutbuki_links.append(get_url_product)
+                    noutbuki_links[title_clipping] = get_url_product
 
-    links_for_collect_feedback = [*mobile_phone_links, *televizory_links, *noutbuki_links]
+    links_for_collect_reviewes = {**mobile_phone_links, **televizory_links, **noutbuki_links}
 
-    return links_for_collect_feedback
+    return links_for_collect_reviewes
 
 
-# Collecting data (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
-def collecting_data_from_reviews(feedback_links):
-    for links in feedback_links:
+# Save product page in HTML-file for collect reviewes
+def save_product_page (review_links):
+    title_files = []
+
+    for title_product, link in review_links.items():
         try:
-            response = requests.get(url=links, headers=config.HEADERS)
+            response = requests.get(url=link, headers=config.HEADERS).text
 
-            soup = bs4.BeautifulSoup(response.text, 'html.parser')
+            with open(f'{config.HTML_FILES}{title_product}.html', 'w', encoding='utf-8') as file:
+                file.write(str(response))
+                file.close()
 
         except Exception as ex:
             print(ex)
 
-        get_title_product = soup.find('section', {'class':'main-reviews container'}).find('h2', {'class':'page__title nowrap js-toggle-card-box'}).find('label').text
-        print(get_title_product)
+        title_files.append(title_product)
 
-        #TODO Create new title product
+    return title_files
 
-        get_block_comment = soup.find('section', {'class':'main-reviews container'}).find('div', {'class':'main-reviews__body js-toggle-body'}).find('div').find_all('div', {'class':'product-comment__item-title'})
 
-        for text in get_block_comment:
-            print(text.text)
+# Collecting data (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
+def collect_data(title_html_files):
+    for title_file in title_html_files:
+        with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
+            file = file.read()
+
+        soup = bs4.BeautifulSoup(file, 'html.parser')
+
+        block_feedback = config.URL_BASIC_PAGE + soup.find('section', {'class':'main-reviews container'}).find('div').find('div', {'class':'main-reviews__item'}).find('div').find('a').get('href')
+        print(block_feedback)
+
         
         
 
@@ -163,7 +179,8 @@ def main():
     # categories()
     title = category_page_request()
     links_for_scraping = collect_links_reviewes(title=title)
-    collecting_data_from_reviews(feedback_links=links_for_scraping)
+    page_product = save_product_page(review_links=links_for_scraping)
+    collect_data(title_html_files=page_product)
 
 
 if __name__ == '__main__':
