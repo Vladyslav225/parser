@@ -1,6 +1,8 @@
+import base64
 import bs4
 import requests
 import json
+import pybase64
 
 import config
 
@@ -48,7 +50,7 @@ def categories():
         json.dump(links_type_products, file, indent=4, ensure_ascii=False)
 
 
-# Select multiple categories products.
+# Select of multiple categories products.
 # Send request to page Categories and save to html file
 def category_page_request():
     title_sub_categies = []
@@ -81,8 +83,8 @@ def category_page_request():
     return title_sub_categies
 
 
-# Getting product links to collect feedback
-def collect_links_reviewes(title):
+# Selection of multiple products to collect reviews
+def collect_multiple_links(title):
     links_for_collect_reviewes = []
 
     mobile_phone_links = {}
@@ -140,17 +142,17 @@ def collect_links_reviewes(title):
     return links_for_collect_reviewes
 
 
-# Save product page in HTML-file for collect reviewes
-def save_product_page (review_links):
+# Request and Save product page in HTML-file for collect reviews
+def save_product_page(review_links):
     title_files = []
 
     for title_product, link in review_links.items():
         try:
-            response = requests.get(url=link, headers=config.HEADERS).text
+            response = requests.get(url=link, headers=config.HEADERS)
 
-            with open(f'{config.HTML_FILES}{title_product}.html', 'w', encoding='utf-8') as file:
-                file.write(str(response))
-                file.close()
+            # with open(f'{config.HTML_FILES}{title_product}.html', 'w', encoding='utf-8') as file:
+            #     file.write(str(response))
+            #     file.close()
 
         except Exception as ex:
             print(ex)
@@ -160,27 +162,38 @@ def save_product_page (review_links):
     return title_files
 
 
-# Collecting data (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
-def collect_data(title_html_files):
+# Collecting links with reviews (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
+def collect_links_reviews(title_html_files):
+    links_with_reviews = {}
+
     for title_file in title_html_files:
         with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
             file = file.read()
 
         soup = bs4.BeautifulSoup(file, 'html.parser')
 
-        block_feedback = config.URL_BASIC_PAGE + soup.find('section', {'class':'main-reviews container'}).find('div').find('div', {'class':'main-reviews__item'}).find('div').find('a').get('href')
-        print(block_feedback)
+        convert_urls_to_byte = base64.b64decode(soup.find('div', {'id':'comment-list-popup'}).get('data-url'))
+        convert_to_ascii = config.URL_BASIC_PAGE + convert_urls_to_byte.decode('utf-8')
 
-        
-        
+        title_key = f'{title_file} - comments page'
+
+        links_with_reviews[title_key] = convert_to_ascii
+
+    return links_with_reviews
+
+
+def response_links_reviews(reviewe_links):
+    
+    print(reviewe_links)
 
 def main():
     # request_basic_page()
     # categories()
-    title = category_page_request()
-    links_for_scraping = collect_links_reviewes(title=title)
+    title_sub_category_products = category_page_request()
+    links_for_scraping = collect_multiple_links(title=title_sub_category_products)
     page_product = save_product_page(review_links=links_for_scraping)
-    collect_data(title_html_files=page_product)
+    get_links_reviews = collect_links_reviews(title_html_files=page_product)
+    response_links_reviews(reviewe_links=get_links_reviews)
 
 
 if __name__ == '__main__':
