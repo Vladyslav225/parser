@@ -162,7 +162,7 @@ def save_product_page(review_links):
     return title_files
 
 
-# Collecting links with reviews (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
+# Collecting links with reviews
 def collect_links_reviews(title_html_files):
     links_with_reviews = {}
 
@@ -175,16 +175,49 @@ def collect_links_reviews(title_html_files):
         convert_urls_to_byte = base64.b64decode(soup.find('div', {'id':'comment-list-popup'}).get('data-url'))
         convert_to_ascii = config.URL_BASIC_PAGE + convert_urls_to_byte.decode('utf-8')
 
-        title_key = f'{title_file} - comments page'
+        title_key = f'{title_file} page reviews'
 
         links_with_reviews[title_key] = convert_to_ascii
 
     return links_with_reviews
 
 
-def response_links_reviews(reviewe_links):
+# Sending request to reviews links and saving to HTML-file
+def request_links_reviews(reviewe_links):
+    title_page_reviews = []
+
+    for key, value in reviewe_links.items():
+        try:
+            response = requests.get(url=value, headers=config.HEADERS).text
+
+            with open(f'{config.HTML_FILES}{key}.html', 'w', encoding='utf-8') as file:
+                file.write(str(response))
+                file.close()
+
+        except Exception as ex:
+            print(ex)
+
+        title_page_reviews.append(key)
+
+    return title_page_reviews
+
+
+# Collecting data from reviewe links (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
+def collecting_reviews(title_page_reviews):
+    for title_file in title_page_reviews:
+        with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
+            file = file.read()
+
+        soup = bs4.BeautifulSoup(file, 'html.parser')
+
+        get_blocks_with_data = soup.find('div', {'class':'popup-comment-list__body'}).find('div', {'class':'comments-container'}).find_all('article')
+
+        for data in get_blocks_with_data:
+            name_reviewer = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-title'}).text.strip()
+
+            date_review = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-col'}).text.strip()
+            print(date_review)
     
-    print(reviewe_links)
 
 def main():
     # request_basic_page()
@@ -193,8 +226,23 @@ def main():
     links_for_scraping = collect_multiple_links(title=title_sub_category_products)
     page_product = save_product_page(review_links=links_for_scraping)
     get_links_reviews = collect_links_reviews(title_html_files=page_product)
-    response_links_reviews(reviewe_links=get_links_reviews)
+    response_reviewe_links = request_links_reviews(reviewe_links=get_links_reviews)
+    collecting_reviews(title_page_reviews=response_reviewe_links)
 
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=8032&classId=60
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=8042&classId=60
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=7765&classId=60
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=4065&classId=977
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=3697&classId=977
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=4021&classId=977
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=20260&classId=58
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=21264&classId=58
+# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=18124&classId=58
