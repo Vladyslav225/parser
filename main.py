@@ -204,6 +204,9 @@ def request_links_reviews(reviewe_links):
 
 # Collecting data from reviewe links (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
 def collecting_reviews(title_page_reviews):
+    dignity_products = {}
+    limitations_products = {}
+
     for title_file in title_page_reviews:
         with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
             file = file.read()
@@ -213,11 +216,41 @@ def collecting_reviews(title_page_reviews):
         get_blocks_with_data = soup.find('div', {'class':'popup-comment-list__body'}).find('div', {'class':'comments-container'}).find_all('article')
 
         for data in get_blocks_with_data:
+            
+            # User feedback
             name_reviewer = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-title'}).text.strip()
 
             date_review = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-col'}).text.strip()
-            print(date_review)
-    
+
+            text_review = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-col_content'}).find('div').text.strip()
+
+
+            block_dignities_and_limitations = data.find('div', {'class':'product-comment__item'}).select('div > div:nth-of-type(4)')
+
+            for dignities_and_limitations in block_dignities_and_limitations:
+                block_dignities = dignities_and_limitations.select('ul > li:nth-of-type(1)')
+
+                for dignities in block_dignities:
+                    title_dignities = dignities.find('label').text
+                    text_dignities = dignities.find('p').text
+                    
+                    dignity_products[title_dignities] = text_dignities
+
+
+                block_limitations = dignities_and_limitations.select('ul > li:nth-of-type(2)')
+
+                for limitations in block_limitations:
+                    title_limitations = limitations.find('label').text
+                    text_limitations = limitations.find('p').text
+
+                    limitations_products[title_limitations] = text_limitations
+
+            # Response to user feedback
+            name_responser = data.find('div', {'class':'product-comment__sub'}).find('div', {'class':'product-comment__item-title'}).text.strip()
+
+            date_response = data.find('div', {'class':'product-comment__sub'}).find('div', {'class':'product-comment__item-title'}).find('div').text.strip()
+
+
 
 def main():
     # request_basic_page()
