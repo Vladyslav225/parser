@@ -2,7 +2,6 @@ import base64
 import bs4
 import requests
 import json
-import pybase64
 
 import config
 
@@ -150,9 +149,9 @@ def save_product_page(review_links):
         try:
             response = requests.get(url=link, headers=config.HEADERS)
 
-            # with open(f'{config.HTML_FILES}{title_product}.html', 'w', encoding='utf-8') as file:
-            #     file.write(str(response))
-            #     file.close()
+            with open(f'{config.HTML_FILES}{title_product}.html', 'w', encoding='utf-8') as file:
+                file.write(str(response))
+                file.close()
 
         except Exception as ex:
             print(ex)
@@ -288,8 +287,8 @@ def collecting_reviews(title_page_reviews):
 
 
 def main():
-    # request_basic_page()
-    # categories()
+    request_basic_page()
+    categories()
     title_sub_category_products = category_page_request()
     links_for_scraping = collect_multiple_links(title=title_sub_category_products)
     page_product = save_product_page(review_links=links_for_scraping)
@@ -300,17 +299,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=8032&classId=60
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=8042&classId=60
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=7765&classId=60
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=4065&classId=977
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=3697&classId=977
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=4021&classId=977
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=20260&classId=58
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=21264&classId=58
-# https://www.foxtrot.com.ua/ru/product/commentspopup?catalogObjectId=18124&classId=58
