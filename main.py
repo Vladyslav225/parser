@@ -85,7 +85,7 @@ def category_page_request():
 
 # Selection of multiple products to collect reviews
 def collect_multiple_links(title):
-    links_for_collect_reviewes = []
+    links_for_collect_reviewes = {}
 
     mobile_phone_links = {}
     televizory_links = {}
@@ -172,6 +172,7 @@ def collect_links_reviews(title_html_files):
 
         soup = bs4.BeautifulSoup(file, 'html.parser')
 
+        # Getting URL with reviewes for attribut "data-url"
         convert_urls_to_byte = base64.b64decode(soup.find('div', {'id':'comment-list-popup'}).get('data-url'))
         convert_to_ascii = config.URL_BASIC_PAGE + convert_urls_to_byte.decode('utf-8')
 
@@ -204,8 +205,14 @@ def request_links_reviews(reviewe_links):
 
 # Collecting data from reviewe links (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
 def collecting_reviews(title_page_reviews):
+    reviewes = {}
+    responses = {}
+
+    data_reviewes = {}
+    data_response = {}
+
     dignity_products = {}
-    limitations_products = {}
+    limitation_products = {}
 
     for title_file in title_page_reviews:
         with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
@@ -219,10 +226,13 @@ def collecting_reviews(title_page_reviews):
             
             # User feedback
             name_reviewer = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-title'}).text.strip()
+            data_reviewes['Name reviewer'] = name_reviewer
 
             date_review = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-col'}).text.strip()
+            data_reviewes['Date reviewe'] = date_review
 
             text_review = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-col_content'}).find('div').text.strip()
+            data_reviewes['Text reviewe'] = text_review
 
 
             block_dignities_and_limitations = data.find('div', {'class':'product-comment__item'}).select('div > div:nth-of-type(4)')
@@ -236,19 +246,44 @@ def collecting_reviews(title_page_reviews):
                     
                     dignity_products[title_dignities] = text_dignities
 
-
                 block_limitations = dignities_and_limitations.select('ul > li:nth-of-type(2)')
 
                 for limitations in block_limitations:
                     title_limitations = limitations.find('label').text
                     text_limitations = limitations.find('p').text
 
-                    limitations_products[title_limitations] = text_limitations
+                    limitation_products[title_limitations] = text_limitations
+
+                dignities_and_limitations = {**dignity_products, **limitation_products}
+            
+            data_reviewes['Dignity and Limitatins'] = dignities_and_limitations
+
+            reviewes['Reviewe'] = data_reviewes
+
+            with open(f'{config.JSON_FILES}{title_file}.json', 'a') as file:
+                    json.dump(reviewes, file, indent=4, ensure_ascii=False)
+
 
             # Response to user feedback
-            name_responser = data.find('div', {'class':'product-comment__sub'}).find('div', {'class':'product-comment__item-title'}).text.strip()
+            block_response = data.find('div', {'class':'product-comment__sub'})
 
-            date_response = data.find('div', {'class':'product-comment__sub'}).find('div', {'class':'product-comment__item-title'}).find('div').text.strip()
+            if block_response in data:
+                name_responser = block_response.find('div').find('div', {'class':'product-comment__item-title'}).text.strip()
+                data_response['Name responser'] = name_responser
+                    
+                date_response = block_response.find('div').find('div', {'class':'product-comment__item-col'}).find('div').text.strip()
+                data_response['Date response'] = date_response
+
+                text_response = block_response.find('div').find('div', {'class':'product-comment__item-col product-comment__item-col_content'}).find('div').text.strip()
+                data_response['Text response'] = text_response
+
+                responses['Response'] = data_response
+
+                with open(f'{config.JSON_FILES}{title_file}.json', 'a') as file:
+                    json.dump(responses, file, indent=4, ensure_ascii=False)
+
+
+
 
 
 
