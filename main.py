@@ -11,9 +11,9 @@ def request_basic_page():
     try:
         response = requests.get(url=config.URL_BASIC_PAGE, headers=config.HEADERS).text
 
-        with open(f'{config.HTML_FILES}basic_page.html', 'w', encoding='utf-8') as file:
-            file.write(str(response))
-            file.close()
+        # with open(f'{config.HTML_FILES}basic_page.html', 'w', encoding='utf-8') as file:
+        #     file.write(str(response))
+        #     file.close()
 
     except Exception as ex:
         print(ex)
@@ -45,8 +45,8 @@ def categories():
 
         links_type_products[text_type_products] = _create_full_link
 
-    with open(f'{config.JSON_FILES}catalog_with_type_products.json', 'w') as file:
-        json.dump(links_type_products, file, indent=4, ensure_ascii=False)
+    # with open(f'{config.JSON_FILES}catalog_with_type_products.json', 'w') as file:
+    #     json.dump(links_type_products, file, indent=4, ensure_ascii=False)
 
 
 # Select of multiple categories products.
@@ -75,9 +75,9 @@ def category_page_request():
             
             response_subcategories = requests.get(url=get_url_sub_category, headers=config.HEADERS).text
 
-            with open(f'{config.HTML_FILES}{get_title_sub_category}.html', 'w', encoding='utf-8') as file:
-                file.write(str(response_subcategories))
-                file.close()
+            # with open(f'{config.HTML_FILES}{get_title_sub_category}.html', 'w', encoding='utf-8') as file:
+            #     file.write(str(response_subcategories))
+            #     file.close()
 
     return title_sub_categies
 
@@ -147,11 +147,11 @@ def save_product_page(review_links):
 
     for title_product, link in review_links.items():
         try:
-            response = requests.get(url=link, headers=config.HEADERS)
+            response = requests.get(url=link, headers=config.HEADERS).text
 
-            with open(f'{config.HTML_FILES}{title_product}.html', 'w', encoding='utf-8') as file:
-                file.write(str(response))
-                file.close()
+            # with open(f'{config.HTML_FILES}{title_product}.html', 'w', encoding='utf-8') as file:
+            #     file.write(str(response))
+            #     file.close()
 
         except Exception as ex:
             print(ex)
@@ -171,117 +171,9 @@ def collect_links_reviews(title_html_files):
 
         soup = bs4.BeautifulSoup(file, 'html.parser')
 
-        # Getting URL with reviewes for attribut "data-url"
-        convert_urls_to_byte = base64.b64decode(soup.find('div', {'id':'comment-list-popup'}).get('data-url'))
-        convert_to_ascii = config.URL_BASIC_PAGE + convert_urls_to_byte.decode('utf-8')
-
-        title_key = f'{title_file} page reviews'
-
-        links_with_reviews[title_key] = convert_to_ascii
-
-    return links_with_reviews
-
-
-# Sending request to reviews links and saving to HTML-file
-def request_links_reviews(reviewe_links):
-    title_page_reviews = []
-
-    for key, value in reviewe_links.items():
-        try:
-            response = requests.get(url=value, headers=config.HEADERS).text
-
-            with open(f'{config.HTML_FILES}{key}.html', 'w', encoding='utf-8') as file:
-                file.write(str(response))
-                file.close()
-
-        except Exception as ex:
-            print(ex)
-
-        title_page_reviews.append(key)
-
-    return title_page_reviews
-
-
-# Collecting data from reviewe links (Name user, Date, Review, Number of Stars placed, Pros, Minuses and Answer (if there))
-def collecting_reviews(title_page_reviews):
-    reviewes = {}
-    responses = {}
-
-    data_reviewes = {}
-    data_response = {}
-
-    dignity_products = {}
-    limitation_products = {}
-
-    for title_file in title_page_reviews:
-        with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
-            file = file.read()
-
-        soup = bs4.BeautifulSoup(file, 'html.parser')
-
-        get_blocks_with_data = soup.find('div', {'class':'popup-comment-list__body'}).find('div', {'class':'comments-container'}).find_all('article')
-
-        for data in get_blocks_with_data:
-            
-            # User feedback
-            name_reviewer = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-title'}).text.strip()
-            data_reviewes['Name reviewer'] = name_reviewer
-
-            date_review = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-col'}).text.strip()
-            data_reviewes['Date reviewe'] = date_review
-
-            text_review = data.find('div', {'class':'product-comment__item'}).find('div', {'class':'product-comment__item-col_content'}).find('div').text.strip()
-            data_reviewes['Text reviewe'] = text_review
-
-
-            block_dignities_and_limitations = data.find('div', {'class':'product-comment__item'}).select('div > div:nth-of-type(4)')
-
-            for dignities_and_limitations in block_dignities_and_limitations:
-                block_dignities = dignities_and_limitations.select('ul > li:nth-of-type(1)')
-
-                for dignities in block_dignities:
-                    title_dignities = dignities.find('label').text
-                    text_dignities = dignities.find('p').text
-                    
-                    dignity_products[title_dignities] = text_dignities
-
-                block_limitations = dignities_and_limitations.select('ul > li:nth-of-type(2)')
-
-                for limitations in block_limitations:
-                    title_limitations = limitations.find('label').text
-                    text_limitations = limitations.find('p').text
-
-                    limitation_products[title_limitations] = text_limitations
-
-                dignities_and_limitations = {**dignity_products, **limitation_products}
-            
-            data_reviewes['Dignity and Limitatins'] = dignities_and_limitations
-
-            reviewes['Reviewe'] = data_reviewes
-
-            with open(f'{config.JSON_FILES}{title_file}.json', 'a') as file:
-                    json.dump(reviewes, file, indent=4, ensure_ascii=False)
-
-
-            # Response to user feedback
-            block_response = data.find('div', {'class':'product-comment__sub'})
-
-            if block_response in data:
-                name_responser = block_response.find('div').find('div', {'class':'product-comment__item-title'}).text.strip()
-                data_response['Name responser'] = name_responser
-                    
-                date_response = block_response.find('div').find('div', {'class':'product-comment__item-col'}).find('div').text.strip()
-                data_response['Date response'] = date_response
-
-                text_response = block_response.find('div').find('div', {'class':'product-comment__item-col product-comment__item-col_content'}).find('div').text.strip()
-                data_response['Text response'] = text_response
-
-                responses['Response'] = data_response
-
-                with open(f'{config.JSON_FILES}{title_file}.json', 'a') as file:
-                    json.dump(responses, file, indent=4, ensure_ascii=False)
-
-
+        # Getting URL with reviewes
+        block_reviews = soup.find('section', {'id':'anchor-3'}).find('div', {'class':'main-reviews__body'})
+        print(block_reviews)
 
 
 
@@ -293,8 +185,8 @@ def main():
     links_for_scraping = collect_multiple_links(title=title_sub_category_products)
     page_product = save_product_page(review_links=links_for_scraping)
     get_links_reviews = collect_links_reviews(title_html_files=page_product)
-    response_reviewe_links = request_links_reviews(reviewe_links=get_links_reviews)
-    collecting_reviews(title_page_reviews=response_reviewe_links)
+    # response_reviewe_links = request_links_reviews(reviewe_links=get_links_reviews)
+    # collecting_reviews(title_page_reviews=response_reviewe_links)
 
 
 if __name__ == '__main__':
