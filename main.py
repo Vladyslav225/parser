@@ -4,6 +4,7 @@ import requests
 import json
 
 import config
+import collect_reviews_and_responses as crr
 
 
 # Basic page save to file html
@@ -163,7 +164,7 @@ def save_product_page(review_links):
 
 # Collecting links with reviews
 def collect_links_reviews(title_html_files):
-    links_with_reviews = {}
+    full_links = {}
 
     for title_file in title_html_files:
         with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
@@ -172,8 +173,19 @@ def collect_links_reviews(title_html_files):
         soup = bs4.BeautifulSoup(file, 'html.parser')
 
         # Getting URL with reviewes
-        block_reviews = soup.find('section', {'id':'anchor-3'}).find('div', {'class':'main-reviews__body'})
-        print(block_reviews)
+        block_reviews = soup.find('section', {'id':'anchor-3'}).find('div', {'class':'main-reviews__body'}).find('div', {'class':'main-reviews__item'}).find('div').find('a', {'class':'button-link'}).get('href')
+
+        if 'javascript:void(0)' in block_reviews:
+            pass
+
+        else:
+        # Collecting of reviews and responses to reviews from links with type "otzyvy"
+            full_links = f'{config.URL_BASIC_PAGE}{block_reviews}'
+
+            crr.parsing_type_links_otzyvy(title_file, full_links)
+            
+
+
 
 
 
@@ -185,8 +197,8 @@ def main():
     links_for_scraping = collect_multiple_links(title=title_sub_category_products)
     page_product = save_product_page(review_links=links_for_scraping)
     get_links_reviews = collect_links_reviews(title_html_files=page_product)
-    # response_reviewe_links = request_links_reviews(reviewe_links=get_links_reviews)
-    # collecting_reviews(title_page_reviews=response_reviewe_links)
+
+    
 
 
 if __name__ == '__main__':
