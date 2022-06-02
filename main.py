@@ -164,8 +164,6 @@ def save_product_page(review_links):
 
 # Collecting links with reviews
 def collect_links_reviews(title_html_files):
-    full_links = {}
-
     for title_file in title_html_files:
         with open(f'{config.HTML_FILES}{title_file}.html', 'r') as file:
             file = file.read()
